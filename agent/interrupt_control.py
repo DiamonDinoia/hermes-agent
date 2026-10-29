@@ -323,8 +323,8 @@ class InterruptControlMixin:
     def redirect(self, text: str) -> bool:
         """Redirect the active turn without converting it into a new task: during a model request only that
         request is cancelled (completed messages kept, partial reasoning becomes assistant context, the
-        correction is appended as a real user message, the loop retries); during tool execution it degrades
-        to ``steer()``; Codex app-server uses native ``turn/steer``. False when no live turn / empty text."""
+        correction is appended as a real user message, the loop retries); during tool execution or context
+        compaction it degrades to ``steer()``; Codex app-server uses native ``turn/steer``. False when no live turn / empty text."""
         if not text or not text.strip():
             return False
         cleaned = text.strip()
@@ -362,7 +362,10 @@ class InterruptControlMixin:
         _model_active = getattr(self, "_model_request_active", None)
         with _ic_lock(self, "_pending_redirect_lock"):
             if _model_active is None or not _model_active.is_set():
-                return False  # response completed before we got the lock: surface queues a new turn
+                # Compaction runs between model requests and is never cancelled; the steer reaches the next.
+                if vars(self).get("_active_compression_commit_fence") is None or self._interrupt_requested:
+                    return False  # response completed before we got the lock: surface queues a new turn
+                return self.steer(cleaned)
             existing = _ic_slot(self, "_pending_redirect_lock", "_pending_redirect")
             if self._interrupt_requested and not existing:
                 return False
