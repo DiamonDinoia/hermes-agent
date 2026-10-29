@@ -258,6 +258,10 @@ def _build_child_agent(
         goal, context, workspace_path=_resolve_workspace_hint(parent_agent), role=effective_role,
         max_spawn_depth=max_spawn, child_depth=child_depth,
     )
+    route_skills = (routing_cfg or {}).get("skills")
+    if route_skills:
+        from agent.skill_commands import build_auto_load_prompt
+        child_prompt += "\n\n" + build_auto_load_prompt(user_config={"skills": {"auto_load": route_skills}})[0]
     parent_api_key = getattr(parent_agent, "api_key", None)
     if (not parent_api_key) and hasattr(parent_agent, "_client_kwargs"):
         parent_api_key = parent_agent._client_kwargs.get("api_key")

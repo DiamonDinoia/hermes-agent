@@ -108,6 +108,9 @@ A route is a dict with any of:
   A `reasoning_effort` that is not a known level (`none`, `minimal`, `low`, `medium`, `high`,
   `xhigh`, ...) refuses the task with a tool error instead of falling back to the parent's level; the
   `delegation.reasoning_effort` value itself keeps its usual warn-and-inherit rule.
+- `skills`: a list of skill names. Core loads them into the child's system prompt, the same way
+  `skills.auto_load` loads skills into a new session. A name that is missing or disabled is skipped
+  and never refuses the task.
 - `service_tier`: `normal`, `fast` or `ultrafast`. Core checks it against the resolved route with the
   same gates as `/fast` (and, for `ultrafast`, the signed-in Codex account's catalog). A tier the
   route does not offer refuses the task; otherwise it applies to that child only and is re-applied

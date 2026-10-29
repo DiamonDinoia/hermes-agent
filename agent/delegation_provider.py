@@ -51,6 +51,7 @@ RESERVED_TASK_PARAMETERS = frozenset({
 ROUTE_KEYS = frozenset({
     "model", "provider", "base_url", "api_key", "api_mode", "request_overrides",
     "reasoning_effort", "service_tier", "fallback_providers", "profile", "label",
+    "skills",
 })
 
 
