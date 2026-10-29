@@ -299,9 +299,9 @@ class CLIStatusBarMixin:
         compressor = getattr(agent, "context_compressor", None)
         if compressor:
             # last_prompt_tokens parks at the -1 sentinel right after a compression until the
-            # next real API call; clamp so the bar never renders "-1/200K".
-            context_tokens = max(0, getattr(compressor, "last_prompt_tokens", 0) or 0)
-            from agent.context_breakdown import context_display_source
+            # next real API call; the compacted transcript's rough size is shown (marked estimated).
+            from agent.context_breakdown import context_display_source, context_display_tokens
+            context_tokens = context_display_tokens(compressor)
             snapshot["context_estimated"] = context_display_source(compressor) != "provider_usage"
             # Display-only anchoring: on reasoning models a long tool loop replays the turn's
             # thinking on every request, so the LAST request's prompt_tokens can exceed the

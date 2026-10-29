@@ -982,6 +982,10 @@ class GatewayTurnProgressMixin:
         from gateway.run import _prepare_gateway_status_message, _redact_gateway_user_facing_secrets, _send_or_update_status_coro
         from gateway.warning_notifications import is_warning_status, render_notification
         ctx = self._ctx
+        if event_type == "compacted" and ctx._run_still_current() and local_viewer_turn(self):
+            # A commit changed the transcript: show its estimate before the next API call.
+            from gateway.session_usage import publish_usage
+            publish_usage(self, ctx.agent_holder[0])
         if ctx.mute_notification_reply or not self._status_live():
             return
         prepared = _prepare_gateway_status_message(ctx.source.platform, event_type, message)

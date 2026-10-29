@@ -31,8 +31,8 @@ def _context(agent, compressor) -> dict:
     if compressor is None:
         return {"last_prompt_tokens": 0, "context_tokens": 0, "context_length": None,
                 "config_context_length": None, "context_source": None, "compression_count": 0}
-    from agent.context_breakdown import context_display_source
-    last = max(0, getattr(compressor, "last_prompt_tokens", 0) or 0)
+    from agent.context_breakdown import context_display_source, context_display_tokens
+    last = context_display_tokens(compressor)
     tokens = last
     with contextlib.suppress(Exception):
         from agent.usage_anchor import anchored_context_tokens

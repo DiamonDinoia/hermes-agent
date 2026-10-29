@@ -123,13 +123,25 @@ def context_display_source(compressor: Any) -> str:
     A seed never updates that ledger, even if its number later matches real usage.
     """
     real = getattr(compressor, "last_real_prompt_tokens", None)
-    shown = getattr(compressor, "last_prompt_tokens", 0) or 0
+    shown = context_display_tokens(compressor)
+    if shown > 0 and getattr(compressor, "awaiting_real_usage_after_compression", False) is True:
+        return "local_estimate"  # the last real reading measured the transcript before the compaction
     return "local_estimate" if isinstance(real, (int, float)) and shown > 0 and shown != real else "provider_usage"
+
+
+def context_display_tokens(compressor: Any) -> int:
+    """The occupancy to show. After a committed compaction ``last_prompt_tokens`` holds the -1 sentinel
+    until the next real reading; the compacted transcript's rough size stands in for it."""
+    shown = getattr(compressor, "last_prompt_tokens", 0) or 0
+    if shown < 0:
+        rough = getattr(compressor, "last_compression_rough_tokens", 0)
+        return rough if isinstance(rough, int) and rough > 0 else 0
+    return shown
 
 
 def context_usage_fields(compressor: Any) -> dict[str, Any]:
     """Current occupancy only; lifetime throughput is never a context fallback."""
-    used = max(0, getattr(compressor, "last_prompt_tokens", 0) or 0)
+    used = context_display_tokens(compressor)
     maximum = getattr(compressor, "context_length", 0) or 0
     if not used or not maximum:
         return {}
