@@ -93,4 +93,5 @@ def summarize_manual_compression(
         "headline": headline,
         "token_line": token_line,
         "note": note,
+        "after_tokens": after_tokens,
     }

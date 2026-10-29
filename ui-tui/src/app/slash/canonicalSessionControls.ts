@@ -342,21 +342,32 @@ export async function switchCanonicalModel(
   }
 }
 
-type CompressSummary = { headline?: string; noop?: boolean; note?: string; token_line?: string } | null
+type CompressSummary = {
+  after_tokens?: null | number
+  headline?: string
+  noop?: boolean
+  note?: string
+  token_line?: string
+} | null
 
 /** The bar's prompt size is the previous reply. Manual /compress does not call the
  *  chat model, and nothing publishes `session.usage` for it, so that size would
- *  stay on screen. The classic CLI parks the reading at -1 and paints 0 until
- *  the next reply, and counts the compaction immediately. */
-function usageAfterManualCompress<U extends { compressions?: null | number }>(usage: U): U {
+ *  stay on screen. The authority's estimate of the compacted request replaces it,
+ *  marked estimated until the next reply; an older authority sends none (0). */
+function usageAfterManualCompress<U extends { compressions?: null | number; context_max?: null | number }>(
+  usage: U,
+  afterTokens?: null | number
+): U {
   const prior = usage.compressions
+  const max = usage.context_max ?? 0
+  const used = afterTokens && afterTokens > 0 ? (max ? Math.min(afterTokens, max) : afterTokens) : 0
 
   return {
     ...usage,
     compressions: (typeof prior === 'number' ? prior : 0) + 1,
-    context_estimated: false,
-    context_percent: 0,
-    context_used: 0
+    context_estimated: used > 0,
+    context_percent: max ? Math.round((used / max) * 100) : 0,
+    context_used: used
   }
 }
 
@@ -395,7 +406,11 @@ async function applyCompressResult(gw: MutationGateway, sid: string, result: Can
   }
 
   ctx.transcript.setHistoryItems([introMsg(info), ...toTranscriptMessages(snapshot.messages)])
-  patchUiState(state => ({ ...state, info, usage: usageAfterManualCompress(state.usage) }))
+  patchUiState(state => ({
+    ...state,
+    info,
+    usage: usageAfterManualCompress(state.usage, (result.summary as CompressSummary)?.after_tokens)
+  }))
   printCompressSummary(result.summary as CompressSummary, ctx)
 }
 

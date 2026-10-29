@@ -12488,6 +12488,18 @@
             ],
             "default": null,
             "title": "Note"
+          },
+          "after_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "After Tokens"
           }
         },
         "title": "CompressionSummary",

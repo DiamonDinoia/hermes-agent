@@ -567,6 +567,7 @@ class CompressionSummary(OpenModel):
     headline: str = ""
     token_line: str = ""
     note: str | None = None
+    after_tokens: int | None = None
 
 
 class SessionCompressParams(SessionParams):

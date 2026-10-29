@@ -92,17 +92,17 @@ async def prepare_compress(authority, live, payload, prepared):
     compressed, compressor = await asyncio.to_thread(summarize)
     # The same report every native /compress prints ("Compressed: N → M messages").
     from agent.manual_compression_feedback import summarize_manual_compression
+    # Estimated like main's (system prompt + tools): the status bar shows after_tokens until the next reply.
+    row = None if resident is not None else authority.db.get_session(snapshot['target'])  # resident: row unused
     if compressed is None:
         if resident is None and not isinstance(compressor, ContextCompressor):
             await asyncio.to_thread(_end_engine, compressor, snapshot['target'], messages)
-        # Nothing removable (a short session keeps every message): main's read-only
-        # "No changes from compression" report, estimated like main's (system prompt + tools).
-        row = None if resident is not None else authority.db.get_session(snapshot['target'])  # resident: row unused
+        # Nothing removable (a short session keeps every message): main's read-only report.
         tokens = _request_tokens(resident, messages, row)
         return {'status': 'noop', 'summary': summarize_manual_compression(
             messages, messages, tokens, tokens, compression_state=compressor)}
-    summary = summarize_manual_compression(messages, compressed, estimate_request_tokens_rough(messages),
-                                           estimate_request_tokens_rough(compressed), compression_state=compressor)
+    summary = summarize_manual_compression(messages, compressed, _request_tokens(resident, messages, row),
+                                           _request_tokens(resident, compressed, row), compression_state=compressor)
     from agent.model_metadata import estimate_messages_tokens_rough
     hook = None if policy.safe_mode else {  # same rough basis as the agent path's compaction record
         'before_tokens': estimate_messages_tokens_rough(messages),

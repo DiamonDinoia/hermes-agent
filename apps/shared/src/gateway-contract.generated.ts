@@ -3572,6 +3572,7 @@ export interface CompressionSummary {
   headline?: string
   token_line?: string
   note?: string | null
+  after_tokens?: number | null
   [key: string]: unknown
 }
 export interface SessionInterruptParams {
