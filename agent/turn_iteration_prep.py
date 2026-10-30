@@ -283,11 +283,16 @@ def _previous_tool_round(messages: Any) -> list:
 
 def _inject_steer_after_newest_tool_result(agent: Any, messages: Any, steer_text: str) -> None:
     """Append the steer marker as a standalone user row after the newest tool message; with no
-    tool message, put the text back so the post-tool-execution drain delivers it later."""
+    tool message, put the text back so the post-tool-execution drain delivers it later.
+    A user row at the tail (turn start, e.g. after pre_api compaction) takes the steer at the tail:
+    an older tool row would put it in front of the turn's prompt. The alternation repair merges it."""
+    from agent.prompt_builder import steer_user_row
+    if messages and isinstance(messages[-1], dict) and messages[-1].get("role") == "user":
+        messages.append(steer_user_row(steer_text))
+        return
     for _si in range(len(messages) - 1, -1, -1):
         _sm = messages[_si]
         if isinstance(_sm, dict) and _sm.get("role") == "tool":
-            from agent.prompt_builder import steer_user_row
             messages.insert(_si + 1, steer_user_row(steer_text))
             logger.debug("Pre-API-call steer drain: appended user row after tool msg at index %d", _si)
             return
